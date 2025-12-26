@@ -33,39 +33,47 @@
   </div>
 
   <script type="module">
-    import { apiFetch } from "./js/api.js";
-    import { saveAuth, clearAuth, getRole } from "./js/auth.js";
+  import { apiFetch } from "./js/api.js";
+  import { saveAuth, clearAuth, getRole } from "./js/auth.js";
 
-    function refreshStatus() {
-      const role = getRole();
-      status.textContent = role ? `Logged in as: ${role}` : "Not logged in.";
-    }
-    refreshStatus();
+  const loginForm = document.getElementById("loginForm");
+  const emailEl = document.getElementById("email");
+  const passEl = document.getElementById("password");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const goGallery = document.getElementById("goGallery");
+  const status = document.getElementById("status");
 
-    loginForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      try {
-        const data = await apiFetch("/api/auth/login", {
-          method: "POST",
-          body: { email: email.value, password: password.value }
-        });
-        saveAuth(data.token, data.role);
-        alert("Logged in!");
-        refreshStatus();
-      } catch (err) {
-        alert(err.message);
-      }
-    });
+  function refreshStatus() {
+    const role = getRole();
+    status.textContent = role ? `Logged in as: ${role}` : "Not logged in.";
+  }
+  refreshStatus();
 
-    logoutBtn.addEventListener("click", () => {
-      clearAuth();
-      alert("Logged out.");
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    try {
+      const data = await apiFetch("/api/auth/login", {
+        method: "POST",
+        body: { email: emailEl.value, password: passEl.value }
+      });
+      saveAuth(data.token, data.role);
+      alert("Logged in!");
       refreshStatus();
-    });
+    } catch (err) {
+      alert(err.message);
+    }
+  });
 
-    goGallery.addEventListener("click", () => {
-      window.location.href = "gallery.html";
-    });
-  </script>
+  logoutBtn.addEventListener("click", () => {
+    clearAuth();
+    alert("Logged out.");
+    refreshStatus();
+  });
+
+  goGallery.addEventListener("click", () => {
+    window.location.href = "gallery.html";
+  });
+</script>
+
 </body>
 </html>
