@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Register</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="gallery.html">Gallery</a>
+    <a href="register.html">Register</a>
+    <a href="login.html">Login</a>
+    <a href="admin.html">Admin</a>
+  </nav>
+
+  <div class="container">
+    <div class="card">
+      <h2>Register (User)</h2>
+      <form id="userForm">
+        <input id="uName" placeholder="Name" required>
+        <input id="uEmail" placeholder="Email" type="email" required>
+        <input id="uPass" placeholder="Password (min 6)" type="password" required>
+        <button type="submit">Create User</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Register (Admin)</h2>
+      <p class="small">Requires the invite code.</p>
+      <form id="adminForm">
+        <input id="aName" placeholder="Name" required>
+        <input id="aEmail" placeholder="Email" type="email" required>
+        <input id="aPass" placeholder="Password (min 6)" type="password" required>
+        <input id="aCode" placeholder="Invite Code" required>
+        <button type="submit">Create Admin</button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { apiFetch } from "./js/api.js";
+
+    document.getElementById("userForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      try {
+        await apiFetch("/api/auth/register", {
+          method: "POST",
+          body: {
+            name: uName.value,
+            email: uEmail.value,
+            password: uPass.value
+          }
+        });
+        alert("User created. Now login.");
+        window.location.href = "login.html";
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+
+    document.getElementById("adminForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      try {
+        await apiFetch("/api/auth/register-admin", {
+          method: "POST",
+          body: {
+            name: aName.value,
+            email: aEmail.value,
+            password: aPass.value,
+            inviteCode: aCode.value
+          }
+        });
+        alert("Admin created. Now login.");
+        window.location.href = "login.html";
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  </script>
+</body>
+</html>

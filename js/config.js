@@ -1,0 +1,1 @@
+export const API_BASE = "https://museum-api-phi.vercel.app";

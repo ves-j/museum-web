@@ -1,0 +1,130 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Admin</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="gallery.html">Gallery</a>
+    <a href="register.html">Register</a>
+    <a href="login.html">Login</a>
+    <a href="admin.html">Admin</a>
+  </nav>
+
+  <div class="container">
+    <div class="card">
+      <h2>Admin Panel</h2>
+      <p class="small">Admins can add and remove paintings.</p>
+      <p class="small" id="roleInfo"></p>
+    </div>
+
+    <div class="card">
+      <h3>Add Painting</h3>
+      <form id="addForm">
+        <input id="title" placeholder="Title" required>
+        <input id="artist" placeholder="Artist" required>
+        <input id="year" placeholder="Year (optional)" type="number">
+        <textarea id="description" placeholder="Description (optional)"></textarea>
+        <input id="file" type="file" accept="image/*" required>
+        <button type="submit">Upload + Create</button>
+      </form>
+      <p class="small" id="uploadStatus"></p>
+    </div>
+
+    <div class="card">
+      <h3>Existing Paintings</h3>
+      <button id="refreshBtn">Refresh List</button>
+      <div id="list"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { apiFetch } from "./js/api.js";
+    import { getRole, getToken, requireAdminOrRedirect } from "./js/auth.js";
+    import { API_BASE } from "./js/config.js";
+
+    requireAdminOrRedirect();
+    roleInfo.textContent = `Role: ${getRole()}`;
+
+    async function cloudinaryUpload(fileObj) {
+      // 1) Ask backend for signature (admin-only)
+      const sig = await apiFetch("/api/cloudinary/signature", { method: "POST", auth: true });
+
+      // 2) Upload directly to Cloudinary using signed params
+      const form = new FormData();
+      form.append("file", fileObj);
+      form.append("api_key", sig.apiKey);
+      form.append("timestamp", sig.timestamp);
+      form.append("signature", sig.signature);
+      form.append("folder", sig.folder);
+
+      const url = `https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`;
+      const res = await fetch(url, { method: "POST", body: form });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error?.message || "Cloudinary upload failed");
+
+      return { secure_url: data.secure_url, public_id: data.public_id };
+    }
+
+    addForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      uploadStatus.textContent = "Uploading image...";
+      try {
+        const up = await cloudinaryUpload(file.files[0]);
+        uploadStatus.textContent = "Creating DB record...";
+
+        await apiFetch("/api/paintings", {
+          method: "POST",
+          auth: true,
+          body: {
+            title: title.value,
+            artist: artist.value,
+            year: year.value ? Number(year.value) : undefined,
+            description: description.value || undefined,
+            imageUrl: up.secure_url,
+            imagePublicId: up.public_id
+          }
+        });
+
+        uploadStatus.textContent = "Done ✅";
+        addForm.reset();
+        await refresh();
+      } catch (err) {
+        uploadStatus.textContent = "";
+        alert(err.message);
+      }
+    });
+
+    async function refresh() {
+      list.innerHTML = "";
+      const items = await apiFetch("/api/paintings");
+      for (const p of items) {
+        const row = document.createElement("div");
+        row.className = "card";
+        row.innerHTML = `
+          <h4>${p.title}</h4>
+          <p class="small">${p.artist}</p>
+          <p class="small">Mongo ID: ${p._id}</p>
+          <button data-id="${p._id}">Delete</button>
+        `;
+        row.querySelector("button").addEventListener("click", async () => {
+          if (!confirm("Delete this painting?")) return;
+          try {
+            await apiFetch(`/api/paintings/${p._id}`, { method: "DELETE", auth: true });
+            await refresh();
+          } catch (err) {
+            alert(err.message);
+          }
+        });
+        list.appendChild(row);
+      }
+    }
+
+    refreshBtn.addEventListener("click", refresh);
+    refresh();
+  </script>
+</body>
+</html>

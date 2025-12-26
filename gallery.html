@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Gallery</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="gallery.html">Gallery</a>
+    <a href="register.html">Register</a>
+    <a href="login.html">Login</a>
+    <a href="admin.html">Admin</a>
+  </nav>
+
+  <div class="container">
+    <div class="card">
+      <h2>Paintings Gallery</h2>
+      <p class="small">Anyone can browse paintings. Admins manage paintings in the Admin page.</p>
+      <button id="reloadBtn">Reload</button>
+    </div>
+
+    <div id="grid" class="grid"></div>
+  </div>
+
+  <script type="module">
+    import { apiFetch } from "./js/api.js";
+
+    async function load() {
+      grid.innerHTML = "";
+      try {
+        const items = await apiFetch("/api/paintings");
+        for (const p of items) {
+          const div = document.createElement("div");
+          div.className = "card";
+          div.innerHTML = `
+            <h3>${p.title}</h3>
+            <p class="small">${p.artist}${p.year ? " • " + p.year : ""}</p>
+            ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.title}">` : ""}
+            <p class="small">${p.description || ""}</p>
+          `;
+          grid.appendChild(div);
+        }
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    reloadBtn.addEventListener("click", load);
+    load();
+  </script>
+</body>
+</html>
