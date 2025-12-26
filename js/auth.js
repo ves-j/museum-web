@@ -26,3 +26,11 @@ export function requireAdminOrRedirect() {
     window.location.href = "login.html";
   }
 }
+
+export function requireLoginOrRedirect() {
+  const token = getToken();
+  if (!token) {
+    alert("Please log in to view the gallery.");
+    window.location.href = "login.html";
+  }
+}
