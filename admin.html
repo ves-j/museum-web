@@ -99,32 +99,36 @@
     });
 
     async function refresh() {
-      list.innerHTML = "";
-      const items = await apiFetch("/api/paintings");
-      for (const p of items) {
-        const row = document.createElement("div");
-        row.className = "card";
-        row.innerHTML = `
-          <h4>${p.title}</h4>
-          <p class="small">${p.artist}</p>
-          <p class="small">Mongo ID: ${p._id}</p>
-          <button data-id="${p._id}">Delete</button>
-        `;
-        row.querySelector("button").addEventListener("click", async () => {
-          if (!confirm("Delete this painting?")) return;
-          try {
-            await apiFetch(`/api/paintings/${p._id}`, { method: "DELETE", auth: true });
-            await refresh();
-          } catch (err) {
-            alert(err.message);
-          }
-        });
-        list.appendChild(row);
-      }
-    }
+  list.innerHTML = "";
+  const items = await apiFetch("/api/paintings", { auth: true });
 
-    refreshBtn.addEventListener("click", refresh);
-    refresh();
+  for (const p of items) {
+    const row = document.createElement("div");
+    row.className = "card";
+    row.innerHTML = `
+      <h4>${p.title}</h4>
+      <p class="small">${p.artist}</p>
+      <p class="small">Mongo ID: ${p._id}</p>
+      <button data-id="${p._id}">Delete</button>
+    `;
+
+    row.querySelector("button").addEventListener("click", async () => {
+      if (!confirm("Delete this painting?")) return;
+      try {
+        await apiFetch(`/api/paintings/${p._id}`, { method: "DELETE", auth: true });
+        await refresh();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+
+    list.appendChild(row);
+  }
+}
+
+refreshBtn.addEventListener("click", () => refresh().catch(err => alert(err.message)));
+refresh().catch(err => alert(err.message));
+
   </script>
 </body>
 </html>
