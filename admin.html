@@ -50,10 +50,10 @@
     roleInfo.textContent = `Role: ${getRole()}`;
 
     async function cloudinaryUpload(fileObj) {
-      // 1) Ask backend for signature (admin-only)
+      
       const sig = await apiFetch("/api/cloudinary/signature", { method: "POST", auth: true });
 
-      // 2) Upload directly to Cloudinary using signed params
+
       const form = new FormData();
       form.append("file", fileObj);
       form.append("api_key", sig.apiKey);
